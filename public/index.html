@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CRUD de Items</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+    input { padding: .4rem; margin-right: .3rem; }
+    button { padding: .4rem .7rem; cursor: pointer; }
+    li { margin: .4rem 0; }
+    #error { color: #b00020; }
+  </style>
+</head>
+<body>
+  <h1>CRUD de Items</h1>
+  <form id="form">
+    <input id="nombre" placeholder="Nombre" required>
+    <input id="descripcion" placeholder="Descripcion">
+    <button type="submit" id="guardar">Agregar</button>
+    <button type="button" id="cancelar" hidden>Cancelar</button>
+  </form>
+  <p id="error"></p>
+  <ul id="lista"></ul>
+
+  <script>
+    let editId = null;
+    const $ = (id) => document.getElementById(id);
+
+    async function cargar() {
+      const res = await fetch('/api/items');
+      const items = await res.json();
+      $('lista').innerHTML = '';
+      items.forEach((it) => {
+        const li = document.createElement('li');
+        li.textContent = `${it.nombre} - ${it.descripcion || ''} `;
+        const e = document.createElement('button');
+        e.textContent = 'Editar';
+        e.onclick = () => {
+          editId = it.id;
+          $('nombre').value = it.nombre;
+          $('descripcion').value = it.descripcion || '';
+          $('guardar').textContent = 'Actualizar';
+          $('cancelar').hidden = false;
+        };
+        const d = document.createElement('button');
+        d.textContent = 'Eliminar';
+        d.onclick = async () => { await fetch('/api/items/' + it.id, { method: 'DELETE' }); cargar(); };
+        li.append(e, ' ', d);
+        $('lista').appendChild(li);
+      });
+    }
+
+    function limpiar() {
+      editId = null;
+      $('form').reset();
+      $('guardar').textContent = 'Agregar';
+      $('cancelar').hidden = true;
+    }
+    $('cancelar').onclick = limpiar;
+
+    $('form').onsubmit = async (ev) => {
+      ev.preventDefault();
+      const body = JSON.stringify({ nombre: $('nombre').value, descripcion: $('descripcion').value });
+      const url = editId ? '/api/items/' + editId : '/api/items';
+      const res = await fetch(url, {
+        method: editId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body
+      });
+      const data = await res.json();
+      $('error').textContent = res.ok ? '' : (data.error || 'Error');
+      if (res.ok) { limpiar(); cargar(); }
+    };
+
+    cargar();
+  </script>
+</body>
+</html>

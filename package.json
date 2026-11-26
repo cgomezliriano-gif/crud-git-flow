@@ -1,0 +1,8 @@
+{
+  "name": "crud-git-flow",
+  "version": "1.0.0",
+  "description": "CRUD de items con Express para la Tarea 3 de Programacion III (Git Flow)",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "dependencies": { "express": "^4.19.2" }
+}
